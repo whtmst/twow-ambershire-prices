@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """
-Фильтрованный парсер для Ambershire - только нужные consumables из consumable_db.py
+Фильтрованный парсер для Ambershire - сканирует ВСЕ нужные consumables из consumable_db.py напрямую через API
 """
 
 import json
 import time
-import re
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Optional
 import requests
-from bs4 import BeautifulSoup
 
-# Список ВСЕХ нужных itemid из consumable_db.py
+# Список ВСЕХ нужных itemid из consumable_db.py (154 предмета)
 NEEDED_ITEMIDS = {
     # Базовые компоненты
     8831,   # Purple Lotus
@@ -159,7 +157,7 @@ NEEDED_ITEMIDS = {
     47412,  # Concoction of the Arcane Giant
     47414,  # Concoction of the Dreamwater
     
-    # Добавляем недостающие из твоего текущего файла которые могут быть нужны
+    # Дополнительные важные предметы
     3825,   # Elixir of Fortitude
     13510,  # Flask of the Titans
     13512,  # Flask of Supreme Power
@@ -168,49 +166,28 @@ NEEDED_ITEMIDS = {
     19183,  # Hourglass Sand
     4392,   # Advanced Target Dummy
     16023,  # Masterwork Target Dummy
+    5206,   # Bogling Root
+    1703,   # Crystal Basilisk Spine
+    9030,   # Restorative Potion
+    13506,  # Flask of Petrification
+    53015,  # Gurubashi Gumbo
+    61225,  # Lucidity Potion
+    61181,  # Potion of Quickness
+    84040,  # Le Fishe Au Chocolat
+    50237,  # Elixir of Greater Nature Power
+    51720,  # Power Mushroom
+    13442,  # Mighty Rage Potion
+    13935,  # Baked Salmon
+    84041,  # Gilneas Hot Stew
+    51718,  # Juicy Striped Melon
+    2091,   # Magic Dust
+    12190,  # Dreamless Sleep Potion
+    47410,  # Concoction of the Emerald Mongoose
+    47412,  # Concoction of the Arcane Giant
+    47414,  # Concoction of the Dreamwater
 }
 
-# Остальной код твоего парсера остается таким же...
-PROFESSIONS = [
-    "alchemy",
-    "cooking", 
-    "enchanting",
-    "engineering",
-    "first-aid",
-]
-
-PROFESSION_BASE_URL = "https://www.wowauctions.net/professions/turtle-wow/ambershire/mergedAh/{profession}"
 API_BASE = "https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{itemid}"
-
-
-def fetch_profession_items(profession: str) -> Set[int]:
-    """Парсит страницу профессии и извлекает все itemID"""
-    url = PROFESSION_BASE_URL.format(profession=profession)
-    print(f"\nFetching {profession} page...", end=" ")
-    
-    try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        item_links = soup.find_all('a', href=re.compile(r'/auctionHouse/turtle-wow/ambershire/mergedAh/[^/]+-(\d+)$'))
-        
-        item_ids = set()
-        for link in item_links:
-            href = link.get('href')
-            match = re.search(r'-(\d+)$', href)
-            if match:
-                item_id = int(match.group(1))
-                # ФИЛЬТРУЕМ: оставляем только нужные itemid
-                if item_id in NEEDED_ITEMIDS:
-                    item_ids.add(item_id)
-        
-        print(f"OK (found {len(item_ids)} needed items)")
-        return item_ids
-        
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return set()
 
 
 def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
@@ -225,6 +202,7 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
         if not data:
             return None
         
+        # Берем данные за последние N дней
         recent_entries = list(data.items())[-days * 24:]
         if not recent_entries:
             return None
@@ -240,56 +218,60 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
         
         return int(sum(prices) / len(prices))
         
-    except Exception:
+    except Exception as e:
+        print(f"ERROR for item {item_id}: {e}")
         return None
 
 
 def main():
     print("=" * 70)
-    print("FILTERED Ambershire Consumables Scraper for Turtle WoW")
-    print(f"Target items: {len(NEEDED_ITEMIDS)}")
+    print("ENHANCED FILTERED Ambershire Consumables Scraper for Turtle WoW")
+    print(f"Total target items: {len(NEEDED_ITEMIDS)}")
     print("=" * 70)
     
-    # Шаг 1: Собираем только нужные itemID
-    print("\n[STEP 1] Collecting filtered item IDs from professions...")
-    all_items = set()
-    
-    for profession in PROFESSIONS:
-        items = fetch_profession_items(profession)
-        all_items.update(items)
-        time.sleep(1)
-    
-    print(f"\nTotal needed items found: {len(all_items)}")
-    
-    # Шаг 2: Собираем цены
-    print("\n[STEP 2] Fetching prices for needed items...")
+    # Прямой запрос цен для ВСЕХ нужных itemid
+    print("\n[STEP 1] Direct price fetching for ALL needed items...")
     print("-" * 70)
     
     prices = {}
     failed = []
+    successful = 0
     
-    for idx, item_id in enumerate(sorted(all_items), 1):
-        print(f"[{idx}/{len(all_items)}] Item {item_id}...", end=" ")
+    for idx, item_id in enumerate(sorted(NEEDED_ITEMIDS), 1):
+        print(f"[{idx}/{len(NEEDED_ITEMIDS)}] Item {item_id}...", end=" ")
         
         price = fetch_item_price(item_id, days=7)
         
         if price is not None:
             prices[str(item_id)] = price
+            successful += 1
             print(f"OK ({price} copper = {price/10000:.2f}g)")
         else:
             failed.append(item_id)
             print("NO DATA")
         
+        # Задержка чтобы не заDDOSить API
         time.sleep(0.3)
     
     print()
     print("=" * 70)
-    print(f"Successfully fetched: {len(prices)}/{len(all_items)}")
-    print(f"Failed (no auction data): {len(failed)}")
+    print(f"SUCCESSFULLY fetched: {successful}/{len(NEEDED_ITEMIDS)} items")
+    print(f"FAILED (no auction data): {len(failed)} items")
     
-    # Шаг 3: Сохраняем результат
+    if failed:
+        print(f"\nFailed items: {sorted(failed)}")
+        
+        # Сохраняем список неудачных предметов
+        with open("failed-items.txt", "w") as f:
+            for item_id in sorted(failed):
+                f.write(f"{item_id}\n")
+    
+    # Сохраняем результат
     output = {
         "last_update": int(time.time()),
+        "total_items": len(NEEDED_ITEMIDS),
+        "successful_items": successful,
+        "failed_items": len(failed),
         "data": prices
     }
     
@@ -298,14 +280,15 @@ def main():
         json.dump(output, f, indent=2)
     
     print(f"\nSaved to: {output_file}")
+    print(f"File contains {len(prices)} items with prices")
     
-    # Показываем какие предметы не найдены
-    missing_items = NEEDED_ITEMIDS - all_items
-    if missing_items:
-        print(f"\nMissing items (not found in professions): {len(missing_items)}")
-        with open("missing-items.txt", "w") as f:
-            for item_id in sorted(missing_items):
-                f.write(f"{item_id}\n")
+    # Статистика
+    print("\n" + "=" * 70)
+    print("SUMMARY:")
+    print(f"  Total items in filter: {len(NEEDED_ITEMIDS)}")
+    print(f"  Items with prices: {successful}")
+    print(f"  Items without data: {len(failed)}")
+    print(f"  Success rate: {(successful/len(NEEDED_ITEMIDS))*100:.1f}%")
     
     print("\nDone!")
 
