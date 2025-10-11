@@ -26,14 +26,17 @@ jobs:
       run: |
         pip install requests beautifulsoup4
         
-    - name: Run price scraper
+    - name: Run full price scraper
       run: python ambershire_full_scraper.py
+      
+    - name: Run filtered price scraper  
+      run: python filtered_scraper.py
       
     - name: Commit and push changes
       if: success()
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git add ambershire-prices-full.json
+        git add ambershire-prices-full.json ambershire-prices-filtered.json
         git diff --staged --quiet || git commit -m "Auto-update Ambershire prices $(date +'%Y-%m-%d')"
         git push
