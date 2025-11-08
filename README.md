@@ -151,6 +151,7 @@ python full_scraper.py
 
 ## 🔗 Related Projects
 
+- [Turtle WoW Consumables Analyzer](https://whtmst.github.io/summarize_consumes/) - Raid consumables analysis tool (Ambershire server only)
 - [summarize_consumes](https://github.com/melbaa/summarize_consumes) - Raid consumables analysis tool
 - [WowAuctions.net](https://www.wowauctions.net) - Turtle WoW auction data
 
