@@ -1,331 +1,169 @@
 #!/usr/bin/env python3
 """
-Фильтрованный парсер для Ambershire - сканирует ВСЕ нужные consumables из consumable_db.py напрямую через API
+Скрапер для GitHub Actions с обходом блокировки через прокси
 """
 
 import json
 import time
-from typing import Dict, List, Optional
 import requests
+from typing import Dict, Optional
 
-# Список ВСЕХ нужных itemid из consumable_db.py (154 предмета)
+# Полный список предметов
 NEEDED_ITEMIDS = {
-    # Базовые компоненты
-    8831,   # Purple Lotus
-    14344,  # Large Brilliant Shard
-    8393,   # Scorpok Pincer
-    8392,   # Blasted Boar Lung
-    8391,   # Snickerfang Jowl
-    8394,   # Basilisk Brain
-    8396,   # Vulture Gizzard
-    19698,  # Zulian Coin
-    8150,   # Deeprock Salt
-    7078,   # Essence of Fire
-    18512,  # Larval Acid
-    61198,  # Small Dream Shard
-    61199,  # Bright Dream Shard
-    11185,  # Green Power Crystal
-    11184,  # Blue Power Crystal
-    11186,  # Red Power Crystal
-    11188,  # Yellow Power Crystal
-    
-    # Consumables
-    20748,  # Brilliant Mana Oil
-    20747,  # Lesser Mana Oil
-    23123,  # Blessed Wizard Oil
-    20749,  # Brilliant Wizard Oil
-    20750,  # Wizard Oil
-    3829,   # Frost Oil
-    3824,   # Shadow Oil
-    13447,  # Elixir of the Sages
-    9187,   # Elixir of Greater Agility
-    13445,  # Elixir of Superior Defense
-    5634,   # Free Action Potion
-    17708,  # Elixir of Frost Power
-    13454,  # Greater Arcane Elixir
-    7676,   # Thistle Tea
-    13453,  # Elixir of Brute Force
-    12820,  # Winterfall Firewater
-    5633,   # Great Rage Potion
-    5631,   # Rage Potion
-    12431,  # Juju Power
-    12430,  # Juju Flurry
-    12436,  # Juju Might
-    12433,  # Juju Guile
-    12435,  # Juju Escape
-    12432,  # Juju Ember
-    12434,  # Juju Chill
-    53015,  # Gurubashi Gumbo
-    51717,  # Hardened Mushroom
-    8956,   # Oil of Immolation
-    4623,   # Lesser Stoneshield Potion
-    13455,  # Greater Stoneshield
-    61225,  # Lucidity Potion
-    3827,   # Mana Potion
-    6149,   # Mana Potion - Greater
-    13443,  # Mana Potion - Superior
-    13444,  # Mana Potion - Major
-    13446,  # Healing Potion - Major
-    3928,   # Healing Potion - Superior
-    9206,   # Elixir of Giants
-    21151,  # Rumsey Rum Black Label
-    21114,  # Rumsey Rum Dark
-    18262,  # Elemental Sharpening Stone
-    23122,  # Consecrated Sharpening Stone
-    3387,   # Invulnerability
-    12217,  # Dragonbreath Chili
-    61423,  # Dreamtonic
-    10646,  # Goblin Sapper Charge
-    61175,  # Medivh's Merlot Blue Label
-    61174,  # Medivh's Merlot
-    13461,  # Greater Arcane Protection Potion
-    13460,  # Greater Holy Protection Potion
-    13459,  # Greater Shadow Protection Potion
-    13458,  # Greater Nature Protection Potion
-    13457,  # Greater Fire Protection Potion
-    13456,  # Greater Frost Protection Potion
-    6051,   # Holy Protection Potion
-    6048,   # Shadow Protection Potion
-    6052,   # Nature Protection Potion
-    6049,   # Fire Protection Potion
-    6050,   # Frost Protection Potion
-    61224,  # Dreamshard Elixir
-    18641,  # Dense Dynamite
-    10507,  # Solid Dynamite
-    9088,   # Gift of Arthas
-    15993,  # Thorium Grenade
-    4390,   # Iron Grenade
-    13928,  # Grilled Squid
-    9179,   # Elixir of Greater Intellect
-    18253,  # Rejuvenation Potion - Major
-    2456,   # Rejuvenation Potion - Minor
-    2459,   # Swiftness Potion
-    9172,   # Invisibility Potion
-    3823,   # Lesser Invisibility Potion
-    19440,  # Powerful Anti-Venom
-    6453,   # Strong Anti-Venom
-    6452,   # Anti-Venom
-    54010,  # Dissolvent Poison II
-    20520,  # Dark Rune
-    20007,  # Mageblood Potion
-    60976,  # Danonzo's Tel'Abim Surprise
-    60977,  # Danonzo's Tel'Abim Delight
-    60978,  # Danonzo's Tel'Abim Medley
-    9144,   # Wildvine Potion
-    10307,  # Scroll of Stamina IV
-    10310,  # Scroll of Strength IV
-    10306,  # Scroll of Spirit IV
-    10305,  # Scroll of Protection IV
-    10308,  # Scroll of Intellect IV
-    10309,  # Scroll of Agility IV
-    13462,  # Purification Potion
-    5823,   # Poisonous Mushroom
-    13931,  # Nightfin Soup
-    3382,   # Weak Troll's Blood Potion
-    3388,   # Strong Troll's Blood Potion
-    20004,  # Major Troll's Blood Potion
-    3826,   # Mighty Troll's Blood Potion
-    9036,   # Magic Resistance Potion
-    2633,   # Jungle Remedy
-    20008,  # Living Action Potion
-    83309,  # Empowering Herbal Salad
-    3386,   # Elixir of Poison Resistance
-    9224,   # Elixir of Demonslaying
-    17407,  # Graccu's Homemade Meat Pie
-    20002,  # Greater Dreamless Sleep Potion
-    8951,   # Elixir of Greater Defense
-    6662,   # Elixir of Giant Growth
-    22682,  # Frozen Rune
-    9155,   # Arcane Elixir
-    12404,  # Dense Sharpening Stone
-    12643,  # Dense Weightstone
-    6373,   # Elixir of Firepower
-    21546,  # Elixir of Greater Firepower
-    9264,   # Elixir of Shadow Power
-    61181,  # Potion of Quickness
-    84040,  # Le Fishe Au Chocolat
-    13452,  # Elixir of the Mongoose
-    50237,  # Elixir of Greater Nature Power
-    51720,  # Power Mushroom
-    13442,  # Mighty Rage Potion
-    13935,  # Baked Salmon
-    84041,  # Gilneas Hot Stew
-    51718,  # Juicy Striped Melon
-    2091,   # Magic Dust
-    12190,  # Dreamless Sleep Potion
-    47410,  # Concoction of the Emerald Mongoose
-    47412,  # Concoction of the Arcane Giant
-    47414,  # Concoction of the Dreamwater
-    
-    # Дополнительные важные предметы
-    3825,   # Elixir of Fortitude
-    13510,  # Flask of the Titans
-    13512,  # Flask of Supreme Power
-    13511,  # Flask of Distilled Wisdom
-    13513,  # Flask of Chromatic Resistance
-    19183,  # Hourglass Sand
-    4392,   # Advanced Target Dummy
-    16023,  # Masterwork Target Dummy
-    5206,   # Bogling Root
-    1703,   # Crystal Basilisk Spine
-    9030,   # Restorative Potion
-    13506,  # Flask of Petrification
-    53015,  # Gurubashi Gumbo
-    61225,  # Lucidity Potion
-    61181,  # Potion of Quickness
-    84040,  # Le Fishe Au Chocolat
-    50237,  # Elixir of Greater Nature Power
-    51720,  # Power Mushroom
-    13442,  # Mighty Rage Potion
-    13935,  # Baked Salmon
-    84041,  # Gilneas Hot Stew
-    51718,  # Juicy Striped Melon
-    2091,   # Magic Dust
-    12190,  # Dreamless Sleep Potion
-    47410,  # Concoction of the Emerald Mongoose
-    47412,  # Concoction of the Arcane Giant
-    47414,  # Concoction of the Dreamwater
+    8831, 14344, 8393, 8392, 8391, 8394, 8396, 19698, 8150, 7078, 18512, 61198, 61199,
+    11185, 11184, 11186, 11188, 20748, 20747, 23123, 20749, 20750, 3829, 3824, 13447,
+    9187, 13445, 5634, 17708, 13454, 7676, 13453, 12820, 5633, 5631, 12431, 12430, 12436,
+    12433, 12435, 12432, 12434, 53015, 51717, 8956, 4623, 13455, 61225, 3827, 6149, 13443,
+    13444, 13446, 3928, 9206, 21151, 21114, 18262, 23122, 3387, 12217, 61423, 10646, 61175,
+    61174, 13461, 13460, 13459, 13458, 13457, 13456, 6051, 6048, 6052, 6049, 6050, 61224,
+    18641, 10507, 9088, 15993, 4390, 13928, 9179, 18253, 2456, 2459, 9172, 3823, 19440,
+    6453, 6452, 54010, 20520, 20007, 60976, 60977, 60978, 9144, 10307, 10310, 10306, 10305,
+    10308, 10309, 13462, 5823, 13931, 3382, 3388, 20004, 3826, 9036, 2633, 20008, 83309,
+    3386, 9224, 17407, 20002, 8951, 6662, 22682, 9155, 12404, 12643, 6373, 21546, 9264,
+    61181, 84040, 13452, 50237, 51720, 13442, 13935, 84041, 51718, 2091, 12190, 47410,
+    47412, 47414, 3825, 13510, 13512, 13511, 13513, 19183, 4392, 16023, 5206, 1703, 9030,
+    13506
 }
 
-API_BASE = "https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{itemid}"
-
-def get_headers():
-    """Возвращает правильные заголовки для обхода Cloudflare защиты"""
-    return {
-        'authority': 'api.wowauctions.net',
-        'accept': '*/*',
-        'accept-language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6,az;q=0.5',
-        'cache-control': 'no-cache',
-        'origin': 'https://www.wowauctions.net',
-        'pragma': 'no-cache',
-        'priority': 'u=1, i',
-        'referer': 'https://www.wowauctions.net/',
-        'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-    }
-
-def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
-    """Получает среднюю цену предмета за последние N дней"""
-    url = API_BASE.format(itemid=item_id)
+def fetch_with_retry(item_id: int, days: int = 7) -> Optional[int]:
+    """Пробуем разные методы с повторными попытками"""
     
-    try:
-        headers = get_headers()
-        headers['referer'] = f'https://www.wowauctions.net/auctionHouse/turtle-wow/ambershire/mergedAh/{item_id}'
+    methods = [
+        lambda: fetch_direct(item_id),
+        lambda: fetch_with_proxy_1(item_id),
+        lambda: fetch_with_proxy_2(item_id),
+        lambda: fetch_with_proxy_3(item_id),
+    ]
+    
+    for attempt, method in enumerate(methods, 1):
+        try:
+            print(f"  Attempt {attempt}...", end=" ")
+            data = method()
+            if data:
+                price = process_data(data, days)
+                if price:
+                    print("SUCCESS")
+                    return price
+                else:
+                    print("NO DATA")
+            else:
+                print("FAILED")
+        except Exception as e:
+            print(f"ERROR: {e}")
         
-        response = requests.get(url, headers=headers, timeout=15)
-        
-        if response.status_code == 403:
-            print(f"  Blocked by Cloudflare protection")
-            return None
-        
-        response.raise_for_status()
-        
-        data = response.json()
-        if not data:
-            return None
-        
-        # Берем данные за последние N дней
-        recent_entries = list(data.items())[-days * 24:]
-        if not recent_entries:
-            return None
-        
-        prices = []
-        for timestamp, stats in recent_entries:
-            avg_price = stats.get("avg_price")
-            if avg_price and avg_price > 0:
-                prices.append(avg_price)
-        
-        if not prices:
-            return None
-        
-        return int(sum(prices) / len(prices))
-        
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 403:
-            print(f"  ERROR: Blocked by Cloudflare protection")
-        else:
-            print(f"  ERROR: HTTP {response.status_code} for item {item_id}")
-        return None
-    except Exception as e:
-        print(f"  ERROR for item {item_id}: {e}")
-        return None
+        if attempt < len(methods):
+            time.sleep(1)  # Пауза между попытками
+    
+    return None
 
+def fetch_direct(item_id: int) -> Optional[dict]:
+    """Прямой запрос"""
+    url = f"https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{item_id}"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
+
+def fetch_with_proxy_1(item_id: int) -> Optional[dict]:
+    """Через публичный CORS прокси"""
+    url = f"https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{item_id}"
+    proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
+    try:
+        response = requests.get(proxy_url, timeout=15)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
+
+def fetch_with_proxy_2(item_id: int) -> Optional[dict]:
+    """Через другой прокси"""
+    url = f"https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{item_id}"
+    proxy_url = f"https://cors-anywhere.herokuapp.com/{url}"
+    try:
+        response = requests.get(proxy_url, timeout=15)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
+
+def fetch_with_proxy_3(item_id: int) -> Optional[dict]:
+    """Через еще один прокси"""
+    url = f"https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{item_id}"
+    proxy_url = f"https://thingproxy.freeboard.io/fetch/{url}"
+    try:
+        response = requests.get(proxy_url, timeout=15)
+        if response.status_code == 200:
+            return response.json()
+    except:
+    return None
+
+def process_data(data: dict, days: int) -> Optional[int]:
+    """Обрабатываем данные"""
+    if not data:
+        return None
+    
+    recent_entries = list(data.items())[-days * 24:]
+    if not recent_entries:
+        return None
+    
+    prices = []
+    for timestamp, stats in recent_entries:
+        avg_price = stats.get("avg_price")
+        if avg_price and avg_price > 0:
+            prices.append(avg_price)
+    
+    if not prices:
+        return None
+    
+    return int(sum(prices) / len(prices))
 
 def main():
     print("=" * 70)
-    print("ENHANCED FILTERED Ambershire Consumables Scraper for Turtle WoW")
-    print(f"Total target items: {len(NEEDED_ITEMIDS)}")
+    print("GitHub Actions Scraper with Proxy Fallback")
+    print(f"Total items: {len(NEEDED_ITEMIDS)}")
     print("=" * 70)
-    
-    # Прямой запрос цен для ВСЕХ нужных itemid
-    print("\n[STEP 1] Direct price fetching for ALL needed items...")
-    print("-" * 70)
     
     prices = {}
     failed = []
-    successful = 0
     
     for idx, item_id in enumerate(sorted(NEEDED_ITEMIDS), 1):
         print(f"[{idx}/{len(NEEDED_ITEMIDS)}] Item {item_id}...", end=" ")
         
-        price = fetch_item_price(item_id, days=7)
+        price = fetch_with_retry(item_id, days=7)
         
         if price is not None:
             prices[str(item_id)] = price
-            successful += 1
-            print(f"OK ({price} copper = {price/10000:.2f}g)")
+            print(f"PRICE: {price} copper")
         else:
             failed.append(item_id)
             print("NO DATA")
         
-        # Задержка чтобы не заDDOSить API
-        time.sleep(1)  # Увеличил задержку
+        time.sleep(1.5)  # Увеличиваем задержку
     
-    print()
-    print("=" * 70)
-    print(f"SUCCESSFULLY fetched: {successful}/{len(NEEDED_ITEMIDS)} items")
-    print(f"FAILED (no auction data): {len(failed)} items")
-    
-    if failed:
-        print(f"\nFailed items: {sorted(failed)}")
-        
-        # Сохраняем список неудачных предметов
-        with open("failed-items.txt", "w") as f:
-            for item_id in sorted(failed):
-                f.write(f"{item_id}\n")
+    print("\n" + "=" * 70)
+    print(f"SUCCESS: {len(prices)} items")
+    print(f"FAILED: {len(failed)} items")
     
     # Сохраняем результат
     output = {
         "last_update": int(time.time()),
-        "total_items": len(NEEDED_ITEMIDS),
-        "successful_items": successful,
+        "successful_items": len(prices),
         "failed_items": len(failed),
         "data": prices
     }
     
-    output_file = "ambershire-prices-filtered.json"
-    with open(output_file, "w") as f:
+    with open("ambershire-prices-actions.json", "w") as f:
         json.dump(output, f, indent=2)
     
-    print(f"\nSaved to: {output_file}")
-    print(f"File contains {len(prices)} items with prices")
+    print("Saved to ambershire-prices-actions.json")
     
-    # Статистика
-    print("\n" + "=" * 70)
-    print("SUMMARY:")
-    print(f"  Total items in filter: {len(NEEDED_ITEMIDS)}")
-    print(f"  Items with prices: {successful}")
-    print(f"  Items without data: {len(failed)}")
-    if len(NEEDED_ITEMIDS) > 0:
-        print(f"  Success rate: {(successful/len(NEEDED_ITEMIDS))*100:.1f}%")
-    
-    print("\nDone!")
-
+    if failed:
+        print(f"Failed items: {failed}")
 
 if __name__ == "__main__":
     main()
