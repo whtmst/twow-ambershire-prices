@@ -190,18 +190,23 @@ NEEDED_ITEMIDS = {
 API_BASE = "https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{itemid}"
 
 def get_headers():
-    """Возвращает правильные заголовки для обхода блокировки"""
+    """Возвращает правильные заголовки для обхода Cloudflare защиты"""
     return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': 'https://www.wowauctions.net/',
-        'Origin': 'https://www.wowauctions.net',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-site',
-        'Connection': 'keep-alive',
+        'authority': 'api.wowauctions.net',
+        'accept': '*/*',
+        'accept-language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6,az;q=0.5',
+        'cache-control': 'no-cache',
+        'origin': 'https://www.wowauctions.net',
+        'pragma': 'no-cache',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wowauctions.net/',
+        'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
     }
 
 def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
@@ -209,14 +214,14 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
     url = API_BASE.format(itemid=item_id)
     
     try:
-        response = requests.get(url, headers=get_headers(), timeout=15)
+        headers = get_headers()
+        headers['referer'] = f'https://www.wowauctions.net/auctionHouse/turtle-wow/ambershire/mergedAh/{item_id}'
+        
+        response = requests.get(url, headers=headers, timeout=15)
         
         if response.status_code == 403:
-            print(f"  Blocked by 403, trying alternative User-Agent...")
-            # Пробуем альтернативный User-Agent
-            alt_headers = get_headers()
-            alt_headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            response = requests.get(url, headers=alt_headers, timeout=15)
+            print(f"  Blocked by Cloudflare protection")
+            return None
         
         response.raise_for_status()
         
@@ -242,7 +247,7 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
         
     except requests.exceptions.HTTPError as e:
         if response.status_code == 403:
-            print(f"  ERROR: Still blocked by 403 Forbidden")
+            print(f"  ERROR: Blocked by Cloudflare protection")
         else:
             print(f"  ERROR: HTTP {response.status_code} for item {item_id}")
         return None
@@ -279,7 +284,7 @@ def main():
             print("NO DATA")
         
         # Задержка чтобы не заDDOSить API
-        time.sleep(0.5)  # Увеличил задержку
+        time.sleep(1)  # Увеличил задержку
     
     print()
     print("=" * 70)
