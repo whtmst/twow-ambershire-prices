@@ -1,8 +1,8 @@
 name: Update Ambershire Prices
 
 on:
-  schedule:
-    - cron: '0 0 * * 1'  # Каждый понедельник в 00:00 UTC
+#  schedule:
+#    - cron: '0 0 * * 1'  # Каждый понедельник в 00:00 UTC
   workflow_dispatch:      # Ручной запуск
 
 jobs:
