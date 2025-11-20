@@ -187,25 +187,6 @@ CONSUMABLE_DB_ITEMIDS = {
 PROFESSION_BASE_URL = "https://www.wowauctions.net/professions/turtle-wow/ambershire/mergedAh/{profession}"
 API_BASE = "https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{itemid}"
 
-def get_headers():
-    """Возвращает правильные заголовки для обхода Cloudflare защиты"""
-    return {
-        'authority': 'api.wowauctions.net',
-        'accept': '*/*',
-        'accept-language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6,az;q=0.5',
-        'cache-control': 'no-cache',
-        'origin': 'https://www.wowauctions.net',
-        'pragma': 'no-cache',
-        'priority': 'u=1, i',
-        'referer': 'https://www.wowauctions.net/',
-        'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-    }
 
 def fetch_profession_items(profession: str) -> Set[int]:
     """
@@ -215,10 +196,7 @@ def fetch_profession_items(profession: str) -> Set[int]:
     print(f"\nFetching {profession} page...", end=" ")
     
     try:
-        headers = get_headers()
-        headers['referer'] = f'https://www.wowauctions.net/professions/turtle-wow/ambershire/mergedAh/{profession}'
-        
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, timeout=15)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -249,15 +227,7 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
     url = API_BASE.format(itemid=item_id)
     
     try:
-        headers = get_headers()
-        headers['referer'] = f'https://www.wowauctions.net/auctionHouse/turtle-wow/ambershire/mergedAh/{item_id}'
-        
-        response = requests.get(url, headers=headers, timeout=15)
-        
-        if response.status_code == 403:
-            print(f"  Still blocked by Cloudflare...")
-            return None
-        
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         
         data = response.json()
@@ -283,14 +253,7 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
         
         return int(sum(prices) / len(prices))
         
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 403:
-            print(f"  ERROR: Blocked by Cloudflare protection")
-        else:
-            print(f"  ERROR: HTTP {response.status_code} for item {item_id}")
-        return None
-    except Exception as e:
-        print(f"  ERROR for item {item_id}: {e}")
+    except Exception:
         return None
 
 
@@ -307,7 +270,7 @@ def main():
     for profession in PROFESSIONS:
         items = fetch_profession_items(profession)
         profession_items.update(items)
-        time.sleep(2)  # Rate limiting
+        time.sleep(1)  # Rate limiting
     
     print(f"\nTotal items from professions: {len(profession_items)}")
     
@@ -352,7 +315,7 @@ def main():
             print("NO DATA")
         
         # Rate limiting
-        time.sleep(1)  # Увеличил задержку
+        time.sleep(0.3)
     
     print()
     print("=" * 70)
@@ -384,8 +347,7 @@ def main():
     print(f"  Items added from consumable_db.py: {len(missing_items)}")
     print(f"  Items with prices: {successful}")
     print(f"  Items without data: {len(failed)}")
-    if len(all_items) > 0:
-        print(f"  Success rate: {(successful/len(all_items))*100:.1f}%")
+    print(f"  Success rate: {(successful/len(all_items))*100:.1f}%")
     
     if prices:
         avg_price = sum(prices.values()) / len(prices)
