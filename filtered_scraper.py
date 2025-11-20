@@ -189,13 +189,35 @@ NEEDED_ITEMIDS = {
 
 API_BASE = "https://api.wowauctions.net/items/stats/30d/ambershire/mergedAh/{itemid}"
 
+def get_headers():
+    """Возвращает правильные заголовки для обхода блокировки"""
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://www.wowauctions.net/',
+        'Origin': 'https://www.wowauctions.net',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Connection': 'keep-alive',
+    }
 
 def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
     """Получает среднюю цену предмета за последние N дней"""
     url = API_BASE.format(itemid=item_id)
     
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=get_headers(), timeout=15)
+        
+        if response.status_code == 403:
+            print(f"  Blocked by 403, trying alternative User-Agent...")
+            # Пробуем альтернативный User-Agent
+            alt_headers = get_headers()
+            alt_headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            response = requests.get(url, headers=alt_headers, timeout=15)
+        
         response.raise_for_status()
         
         data = response.json()
@@ -218,8 +240,14 @@ def fetch_item_price(item_id: int, days: int = 7) -> Optional[int]:
         
         return int(sum(prices) / len(prices))
         
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 403:
+            print(f"  ERROR: Still blocked by 403 Forbidden")
+        else:
+            print(f"  ERROR: HTTP {response.status_code} for item {item_id}")
+        return None
     except Exception as e:
-        print(f"ERROR for item {item_id}: {e}")
+        print(f"  ERROR for item {item_id}: {e}")
         return None
 
 
@@ -251,7 +279,7 @@ def main():
             print("NO DATA")
         
         # Задержка чтобы не заDDOSить API
-        time.sleep(0.3)
+        time.sleep(0.5)  # Увеличил задержку
     
     print()
     print("=" * 70)
@@ -288,7 +316,8 @@ def main():
     print(f"  Total items in filter: {len(NEEDED_ITEMIDS)}")
     print(f"  Items with prices: {successful}")
     print(f"  Items without data: {len(failed)}")
-    print(f"  Success rate: {(successful/len(NEEDED_ITEMIDS))*100:.1f}%")
+    if len(NEEDED_ITEMIDS) > 0:
+        print(f"  Success rate: {(successful/len(NEEDED_ITEMIDS))*100:.1f}%")
     
     print("\nDone!")
 
