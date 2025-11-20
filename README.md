@@ -14,11 +14,48 @@ Automated price tracking system for consumables and trade goods on Turtle WoW Am
 
 ## 🚀 Features
 
-- **🔄 Fully Automated** - Weekly price updates via GitHub Actions
+- **🔄 Manual Updates** - Weekly price updates maintained manually
+- **💻 Local Scraper** - Run the scraper on your own machine
 - **🎯 Two Versions** - Filtered (155 items) and Full (453 items)
 - **💰 Real-time Data** - Average prices from last 7 days of auction house data
 - **🔧 Easy Integration** - Simple JSON API for developers
 - **📊 Statistics** - Price trends and market analysis
+
+## ⚠️ Update Status
+
+**Automatic updates are currently paused** due to Cloudflare restrictions on GitHub Actions. Prices are now updated manually once per week.
+
+## 💻 Local Scraper
+
+If you need the most up-to-date prices, you can run the scraper locally and submit a pull request:
+
+### Quick Start
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/whtmst/twow-ambershire-prices.git
+   cd twow-ambershire-prices
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install requests beautifulsoup4
+   ```
+
+3. **Run the universal scraper:**
+   ```bash
+   python local_scraper.py
+   ```
+
+4. **Submit a pull request** with the updated JSON files
+
+### Scraper Options
+
+The `local_scraper.py` supports three modes (configured in the file):
+
+- **`MODE = "BOTH"`** - Creates both filtered and full versions (recommended)
+- **`MODE = "FILTERED"`** - Only creates filtered version (155 items)
+- **`MODE = "FULL"`** - Only creates full version (453 items)
 
 ## 📁 File Versions
 
@@ -99,7 +136,7 @@ if item_price:
 ### Data Sources
 - **Auction Data**: [WowAuctions.net](https://www.wowauctions.net) API
 - **Item Database**: Turtle WoW profession pages + consumable_db.py
-- **Update Frequency**: Weekly (every Monday 00:00 UTC)
+- **Update Frequency**: Manual weekly updates
 
 ### Price Calculation
 - Uses 7-day moving average
@@ -124,19 +161,35 @@ if item_price:
 
 ## 🤝 Contributing
 
+### Help Keep Prices Updated!
+
+Since automatic updates are paused, community contributions are welcome:
+
+1. **Run the local scraper** on your machine
+2. **Submit a pull request** with updated JSON files
+3. **Help others** get fresh price data
+
+### Quick Contribution Guide
+```bash
+# 1. Fork and clone the repository
+git clone https://github.com/YOUR_USERNAME/twow-ambershire-prices.git
+
+# 2. Run the scraper
+python local_scraper.py
+
+# 3. Commit and push changes
+git add ambershire-prices-*.json
+git commit -m "Update prices $(date +'%Y-%m-%d')"
+git push
+
+# 4. Create a pull request on GitHub
+```
+
 ### Report Issues
 - Missing consumables in filtered version
 - Incorrect prices
 - API changes
-
-### Manual Update
-```bash
-# Run filtered parser (recommended)
-python filtered_scraper.py
-
-# Run full parser
-python full_scraper.py
-```
+- Scraper problems
 
 ## 📊 Statistics
 
