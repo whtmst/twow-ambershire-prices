@@ -208,12 +208,18 @@ git push
 - [summarize_consumes](https://github.com/melbaa/summarize_consumes) - Raid consumables analysis tool
 - [WowAuctions.net](https://www.wowauctions.net) - Turtle WoW auction data
 
-## 📄 License
+---
 
-MIT License - feel free to use this data in your projects!
+## 📄 Лицензия
+
+Лицензия [GPL-3.0 license](LICENSE) - не стесняйтесь использовать эти данные в своих проектах!
 
 ---
 
-**Maintained by**: [whtmst](https://github.com/whtmst)
+## 👥 Автор
 
-*This project is not affiliated with Turtle WoW or Blizzard Entertainment.*
+**Создано и/или поддерживается пользователем**: [Wht Mst](https://github.com/whtmst)
+
+*Сделано с ❤️ для сообщества Turtle WoW*
+
+*Этот проект не связан (или не аффилирован) с Turtle WoW или Blizzard Entertainment.*
