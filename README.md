@@ -210,16 +210,16 @@ git push
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
-Лицензия [GPL-3.0 license](LICENSE) - не стесняйтесь использовать эти данные в своих проектах!
+License [GPL-3.0 license](LICENSE) - feel free to use this data in your projects!
 
 ---
 
-## 👥 Автор
+## 👥 Author
 
-**Создано и/или поддерживается пользователем**: [Wht Mst](https://github.com/whtmst)
+**Created and/or maintained by**: [Wht Mst](https://github.com/whtmst)
 
-*Сделано с ❤️ для сообщества Turtle WoW*
+*Made with ❤️ for the Turtle WoW community*
 
-*Этот проект не связан (или не аффилирован) с Turtle WoW или Blizzard Entertainment.*
+*This project is not associated (or affiliated) with Turtle WoW or Blizzard Entertainment.*
