@@ -15,6 +15,7 @@ Automated price tracking system for consumables and trade goods on Turtle WoW Am
 ## 🚀 Features
 
 - **🔄 Manual Updates** - Weekly price updates maintained manually
+- **🖥️ Windows Exe** - One-click update tool (no Python required)
 - **💻 Local Scraper** - Run the scraper on your own machine
 - **🎯 Two Versions** - Filtered (155 items) and Full (453 items)
 - **💰 Real-time Data** - Average prices from last 7 days of auction house data
@@ -27,13 +28,22 @@ Automated price tracking system for consumables and trade goods on Turtle WoW Am
 
 ## 💻 Local Scraper
 
-If you need the most up-to-date prices, you can run the scraper locally and submit a pull request:
+If you need the most up-to-date prices, you can run the scraper locally. Choose the method that works best for you:
 
-### Quick Start
+### Option A: Windows Executable (Easiest)
+**No installation required.** Best for users who just want the file.
+
+1. Download **`AmbershireScraper.exe`** from this repository.
+2. Run the executable.
+3. Wait for the console window to close.
+4. The updated JSON files will appear directly on your **Desktop**.
+
+### Option B: Python Script (Advanced)
+Best for developers or if you want to modify the code.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/whtmst/twow-ambershire-prices.git
+   git clone [https://github.com/whtmst/twow-ambershire-prices.git](https://github.com/whtmst/twow-ambershire-prices.git)
    cd twow-ambershire-prices
    ```
 
@@ -49,7 +59,7 @@ If you need the most up-to-date prices, you can run the scraper locally and subm
 
 4. **Submit a pull request** with the updated JSON files
 
-### Scraper Options
+### Scraper Options (for Python)
 
 The `local_scraper.py` supports three modes (configured in the file):
 
@@ -79,9 +89,9 @@ Update your `main.py` to use Ambershire prices:
 
 ```python
 URLS = {
-    "nord": "https://melbalabs.com/static/twowprices.json",
-    "telabim": "https://melbalabs.com/static/twowprices-telabim.json", 
-    "ambershire": "https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json",
+    "nord": "[https://melbalabs.com/static/twowprices.json](https://melbalabs.com/static/twowprices.json)",
+    "telabim": "[https://melbalabs.com/static/twowprices-telabim.json](https://melbalabs.com/static/twowprices-telabim.json)", 
+    "ambershire": "[https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json](https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json)",
 }
 ```
 
@@ -98,12 +108,12 @@ Use our JSON API in your applications:
 import requests
 
 # Fetch filtered prices (recommended)
-url = "https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json"
+url = "[https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json](https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-filtered.json)"
 response = requests.get(url)
 prices_data = response.json()
 
 # Or fetch full database
-url_full = "https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-full.json"
+url_full = "[https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-full.json](https://raw.githubusercontent.com/whtmst/twow-ambershire-prices/main/ambershire-prices-full.json)"
 
 # Access prices
 last_update = prices_data["last_update"]  # Unix timestamp
@@ -141,7 +151,7 @@ if item_price:
 ### Price Calculation
 - Uses 7-day moving average
 - Filters outliers and invalid data  
-- Prices in copper (1g = 10,000 copper)
+- Prices in copper (1g = 10000 copper)
 
 ### File Format
 ```json
@@ -165,17 +175,18 @@ if item_price:
 
 Since automatic updates are paused, community contributions are welcome:
 
-1. **Run the local scraper** on your machine
+1. **Run the local scraper** (using Option A or B above)
 2. **Submit a pull request** with updated JSON files
 3. **Help others** get fresh price data
 
 ### Quick Contribution Guide
 ```bash
 # 1. Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/twow-ambershire-prices.git
+git clone [https://github.com/YOUR_USERNAME/twow-ambershire-prices.git](https://github.com/YOUR_USERNAME/twow-ambershire-prices.git)
 
 # 2. Run the scraper
 python local_scraper.py
+# OR run AmbershireScraper.exe and move files from Desktop to repo folder
 
 # 3. Commit and push changes
 git add ambershire-prices-*.json
@@ -193,14 +204,11 @@ git push
 
 ## 📊 Statistics
 
-**Filtered Version:**  
-![Filtered Success](https://img.shields.io/badge/filtered_success-89%25-brightgreen) ![Filtered Items](https://img.shields.io/badge/items-155-blue)
+**Filtered Version:** ![Filtered Success](https://img.shields.io/badge/filtered_success-89%25-brightgreen) ![Filtered Items](https://img.shields.io/badge/items-155-blue)
 
-**Full Version:**  
-![Full Success](https://img.shields.io/badge/full_success-85%25-green) ![Full Items](https://img.shields.io/badge/items-453-orange)
+**Full Version:** ![Full Success](https://img.shields.io/badge/full_success-85%25-green) ![Full Items](https://img.shields.io/badge/items-453-orange)
 
-**Price Range:**  
-![Average Price](https://img.shields.io/badge/average_price-3.61g-green) ![Min Price](https://img.shields.io/badge/min_price-0.00g-lightgrey) ![Max Price](https://img.shields.io/badge/max_price-552.83g-red)
+**Price Range:** ![Average Price](https://img.shields.io/badge/average_price-3.61g-green) ![Min Price](https://img.shields.io/badge/min_price-0.00g-lightgrey) ![Max Price](https://img.shields.io/badge/max_price-552.83g-red)
 
 ## 🔗 Related Projects
 
